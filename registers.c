@@ -32,6 +32,7 @@ byte r(char* name) {
   } else if (eq(name, "%edi")) {
     return registers.edi;
   } else {
-    return -1;
+    printf("unknown register: %s\n", name);
+    exit(1);
   }
 }

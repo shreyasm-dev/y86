@@ -38,9 +38,20 @@ int main(int argc, char** argv) {
 
   // read files
   char* str = read_string(filename);
-  char* expected = read_string(expected_filename);
 
+  char* expected = read_string(expected_filename);
   expected[strlen(expected) - 1] = '\0';
+
+  // remove spaces and newlines
+  char** expected_temp;
+  int n_expected = 0;
+  tokenise(&expected_temp, &n_expected, expected);
+
+  expected = (char*)malloc(0);
+  for (int i = 0; expected_temp[i] != NULL; i++) {
+    expected = (char*)realloc(expected, strlen(expected) + strlen(expected_temp[i]) + 1);
+    strcat(expected, expected_temp[i]);
+  }
 
   // tokenise
   char** source;
@@ -86,7 +97,32 @@ int main(int argc, char** argv) {
       pushb(0xf0 | r(_));  // b
       i++;
 
-      pushi(v);                 // v
+      pushi(v);                    // v
+    } else if (eq(_, "rmmovl")) {  // rmmovl a, d(b) -> rmmovl a b d
+      pushb(instructions.rmmovl);  // rmmovl
+      i++;
+
+      int a = r(_);
+      i++;
+
+      int d = atoi(_);
+      i++;
+
+      pushb((a << 4) | r(_));  // a, b
+      i++;
+
+      pushi(d);                    // d
+    } else if (eq(_, "mrmovl")) {  // mrmovl d(b), a -> mrmovl a b d
+      pushb(instructions.mrmovl);  // mrmovl
+      i++;
+
+      int d = atoi(_);
+      i++;
+
+      pushb((r(__) << 4) | r(_));  // a, b
+      i += 2;
+
+      pushi(d);                 // d
     } else if (eq(_, "ret")) {  // ret -> ret
       pushb(instructions.ret);  // ret
       i++;

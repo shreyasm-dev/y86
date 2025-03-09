@@ -1,7 +1,7 @@
 #include "includes.h"
 #include "util.h"
 
-// simple lexer: just split it by whitespace and parentheses
+// simple lexer: just split it by whitespace, parentheses, and commas
 void tokenise(char*** tokens, int* n, char* source) {
   *tokens = (char**)malloc(0);
   *n = 0;
@@ -10,7 +10,8 @@ void tokenise(char*** tokens, int* n, char* source) {
 
   for (int i = 0; i < strlen(source); i++) {
     if (source[i] == ' ' || source[i] == '\n' || source[i] == '\t' ||
-        source[i] == '\r' || source[i] == '(' || source[i] == ')') {
+        source[i] == '\r' || source[i] == '(' || source[i] == ')' ||
+        source[i] == ',') {
       if (eq(current, "")) {
         continue;
       }
