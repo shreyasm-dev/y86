@@ -53,7 +53,18 @@ int main(int argc, char** argv) {
 
   // assemble
   for (int i = 0; i < n;) {
-    if (eq(_, "halt")) {         // halt -> halt
+    if (_[strlen(_) - 1] == ':') {  // label
+      char* label = (char*)malloc(strlen(_));
+      strncpy(label, _, strlen(_) - 1);
+      i++;
+
+      if (lookup_get(label) != -1) {
+        printf("duplicate label: %s\n", label);
+        return 1;
+      }
+
+      lookup_set(label, address);
+    } else if (eq(_, "halt")) {  // halt -> halt
       pushb(instructions.halt);  // halt
       i++;
     } else if (eq(_, "nop")) {  // nop -> nop
