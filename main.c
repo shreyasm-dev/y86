@@ -65,7 +65,42 @@ int main(int argc, char** argv) {
 
   // assemble
   for (int i = 0; i < n;) {
-    if (_[strlen(_) - 1] == ':') {  // label
+    if (eq(_, ".pos")) {  // .pos x
+      i++;
+
+      int new = atoi(_);  // x
+      i++;
+
+      if (new < address) {
+        printf("cannot move address back\n");
+        return 1;
+      }
+
+      while (address < new) {
+        pushb(instructions.nop);
+      }
+    } else if (eq(_, ".align")) {  // .align x
+      i++;
+
+      int new = atoi(_);  // x
+      i++;
+
+      if (new <= 0) {
+        printf("alignment must be positive\n");
+        return 1;
+      }
+
+      while (address % new != 0) {
+        pushb(instructions.nop);
+      }
+    } else if (eq(_, ".long") || eq(_, ".quad")) {
+      i++;
+
+      int value = atoi(_);
+      i++;
+
+      pushi(value);
+    } else if (_[strlen(_) - 1] == ':') {  // label
       char* label = (char*)malloc(strlen(_));
       strncpy(label, _, strlen(_) - 1);
       i++;
@@ -153,6 +188,7 @@ int main(int argc, char** argv) {
       pushb((r(_) << 4) | 0xf);  // a/f
       i++;
     } else {
+      printf("%d\n", i);
       printf("unknown instruction: %s\n", _);
       return 1;
     }

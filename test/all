@@ -1,3 +1,6 @@
+.pos 2
+.align 4
+.quad 6251
 halt
 nop
 rrmovl %eax, %ecx
@@ -8,4 +11,3 @@ a: call a
 ret
 pushl %eax
 popl %eax
-
