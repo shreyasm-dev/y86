@@ -1,43 +1,5 @@
-struct instructions {
-  int halt;
-  int nop;
+#include <stdbool.h>
 
-  int rrmovl;
-  int cmovle;
-  int cmovl;
-  int cmove;
-  int cmovne;
-  int cmovge;
-  int cmovg;
+typedef uint8_t byte;
 
-  int irmovl;
-  int rmmovl;
-  int mrmovl;
-
-  int addl;
-  int subl;
-  int andl;
-  int xorl;
-
-  int jmp;
-  int jle;
-  int jl;
-  int je;
-  int jne;
-  int jge;
-  int jg;
-};
-
-struct registers {
-  int eax;
-  int ecx;
-  int edx;
-  int ebx;
-  int esp;
-  int ebp;
-  int esi;
-  int edi;
-};
-
-extern const struct instructions instructions;
-extern const struct registers registers;
+bool eq(char* a, char* b);
