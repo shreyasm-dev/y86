@@ -1,74 +1,106 @@
 #define _ source[i]
 #define __ source[i + 1]
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
+#include "includes.h"
 #include "instructions.h"
+#include "lexer.h"
 #include "registers.h"
 #include "util.h"
 
-int i;
 int address;
-uint8_t* result;
+byte* result;
 
-void pushb(uint8_t value) {
-  result = (uint8_t*)realloc(result, (address + 1) * sizeof(uint8_t));
+void pushb(byte value) {
+  result = (byte*)realloc(result, (address + 1) * sizeof(byte));
   result[address] = value;
   address++;
 }
 
 void pushi(int value) {
-  pushb((uint8_t)((value >> 8) & 0xff));
-  pushb((uint8_t)(value & 0xff));
+  pushb((byte)((value >> 8) & 0xff));
+  pushb((byte)(value & 0xff));
 }
 
 // TODO: 0x- prefix
 int main(int argc, char** argv) {
-  char** source = (char**)malloc(3 * sizeof(char*));
-  source[0] = "irmovl";
-  source[1] = "\%eax";
-  source[2] = "6251";
+  lookup_init();
 
-  i = 0;
+  // test/argv[1]
+  char* filename = (char*)malloc(strlen("test/") + strlen(argv[1]) + 1);
+  strcat(filename, "test/");
+  strcat(filename, argv[1]);
+
+  char* expected_filename = (char*)malloc(strlen("test/") + strlen(argv[1]) +
+                                          strlen("-expected") + 1);
+  strcat(expected_filename, "test/");
+  strcat(expected_filename, argv[1]);
+  strcat(expected_filename, "-expected");
+
+  // read files
+  char* str = read_string(filename);
+  char* expected = read_string(expected_filename);
+
+  expected[strlen(expected) - 1] = '\0';
+
+  // tokenise
+  char** source;
+  int n;
+  tokenise(&source, &n, str);
+
+  // init
   address = 0;
-  result = (uint8_t*)malloc(0);
+  result = (byte*)malloc(0);
 
-  while (_ != NULL) {
-    if (eq(_, "halt")) { // halt -> halt
-      pushb(instructions.halt); // halt
+  // assemble
+  for (int i = 0; i < n;) {
+    if (eq(_, "halt")) {         // halt -> halt
+      pushb(instructions.halt);  // halt
       i++;
-    } else if (eq(_, "nop")) { // nop -> nop
-      pushb(instructions.nop); // nop
+    } else if (eq(_, "nop")) {  // nop -> nop
+      pushb(instructions.nop);  // nop
       i++;
-    } else if (eq(_, "rrmovl")) { // rrmovl a, b -> rrmovl a b
-      pushb(instructions.rrmovl); // rrmovl
+    } else if (eq(_, "rrmovl")) {  // rrmovl a, b -> rrmovl a b
+      pushb(instructions.rrmovl);  // rrmovl
       i++;
 
-      pushb((r(_) << 4) | r(__)); // a, b
+      pushb((r(_) << 4) | r(__));  // a, b
       i += 2;
-    } else if (eq(_, "irmovl")) { // irmovl v, b -> irmovl f/b v
-      pushb(instructions.irmovl); // irmovl
+    } else if (eq(_, "irmovl")) {  // irmovl v, b -> irmovl f/b v
+      pushb(instructions.irmovl);  // irmovl
       i++;
 
-      byte b = 0xf0 | r(_);
+      int v = atoi(_);
       i++;
 
-      pushi(atoi(_)); // v
+      pushb(0xf0 | r(_));  // b
       i++;
 
-      pushb(b); // f/b
-    } else if (eq(_, "ret")) { // ret -> ret
-      pushb(instructions.ret); // ret
+      pushi(v);                 // v
+    } else if (eq(_, "ret")) {  // ret -> ret
+      pushb(instructions.ret);  // ret
       i++;
     } else {
-      printf("Unknown instruction: %s\n", _);
+      printf("unknown instruction: %s\n", _);
       return 1;
     }
   }
 
+  char* result_str = (char*)malloc(0);
+
   for (int i = 0; i < address; i++) {
-    printf("%02x\n", result[i]);
+    char* temp = (char*)malloc(3);
+    sprintf(temp, "%02x", result[i]);
+    result_str = (char*)realloc(result_str, strlen(result_str) + 3 + 1);
+    strcat(result_str, temp);
+
+    printf("%02x ", result[i]);
+  }
+
+  printf("— ");
+
+  if (strcmp(result_str, expected) == 0) {
+    printf("success\n");
+  } else {
+    printf("failure - expected %s, got %s\n", expected, result_str);
   }
 }
