@@ -1,3 +1,11 @@
+halt
+nop
+rrmovl %eax, %ecx
 irmovl 6251, %eax
 rmmovl %eax, 6251(%ecx)
 mrmovl 6251(%ecx), %eax
+a: call a
+ret
+pushl %eax
+popl %eax
+

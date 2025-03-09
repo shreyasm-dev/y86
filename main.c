@@ -48,8 +48,9 @@ int main(int argc, char** argv) {
   tokenise(&expected_temp, &n_expected, expected);
 
   expected = (char*)malloc(0);
-  for (int i = 0; expected_temp[i] != NULL; i++) {
-    expected = (char*)realloc(expected, strlen(expected) + strlen(expected_temp[i]) + 1);
+  for (int i = 0; i < n_expected; i++) {
+    expected = (char*)realloc(expected,
+                              strlen(expected) + strlen(expected_temp[i]) + 1);
     strcat(expected, expected_temp[i]);
   }
 
@@ -122,9 +123,34 @@ int main(int argc, char** argv) {
       pushb((r(__) << 4) | r(_));  // a, b
       i += 2;
 
-      pushi(d);                 // d
+      pushi(d);                  // d
+    } else if (eq(_, "call")) {  // call l -> call l
+      pushb(instructions.call);  // call
+      i++;
+
+      int l = lookup_get(_);
+
+      if (l == -1) {
+        printf("unknown label: %s\n", _);
+        return 1;
+      }
+
+      pushi(l);  // l
+      i++;
     } else if (eq(_, "ret")) {  // ret -> ret
       pushb(instructions.ret);  // ret
+      i++;
+    } else if (eq(_, "pushl")) {  // pushl a -> pushl a/f
+      pushb(instructions.pushl);  // pushl
+      i++;
+
+      pushb((r(_) << 4) | 0xf);  // a/f
+      i++;
+    } else if (eq(_, "popl")) {  // popl a -> popl a/f
+      pushb(instructions.popl);  // popl
+      i++;
+
+      pushb((r(_) << 4) | 0xf);  // a/f
       i++;
     } else {
       printf("unknown instruction: %s\n", _);
