@@ -4,8 +4,10 @@
 #include "registers.h"
 #include "util.h"
 
-int address;
+int i = 0;
+int address = 0;
 byte* result;
+char** source;
 
 void pushb(byte value) { push(result, value, address); }
 
@@ -14,7 +16,33 @@ void pushi(int value) {
   pushb((byte)(value & 0xff));
 }
 
-// TODO: 0x- prefix, inflexibility with punctuation
+void expect(char* expected) {
+  if (!eq(_, expected)) {
+    error("expected \"%s\", got \"%s\"", expected, _);
+  }
+
+  i++;
+}
+
+void expect_space() {
+  // it's one character if it's whitespace anyway, so only looking at the first
+  // character is fine
+  if (!ceq_any(_[0], " \t")) {
+    error("expected space, got \"%s\"", _);
+  }
+
+  i++;
+}
+
+void expect_newline() {
+  if (!ceq_any(_[0], "\n\r")) {
+    error("expected newline, got \"%s\"", _);
+  }
+
+  i++;
+}
+
+// TODO: 0x- prefix
 int main(int argc, char** argv) {
   struct array_map address_lookup = create_map();
 
@@ -38,7 +66,7 @@ int main(int argc, char** argv) {
   // remove spaces and newlines
   char** expected_temp;
   int n_expected = 0;
-  tokenise(&expected_temp, &n_expected, expected);
+  tokenise(&expected_temp, &n_expected, expected, false);
 
   expected = (char*)malloc(0);
   for (int i = 0; i < n_expected; i++) {
@@ -48,18 +76,20 @@ int main(int argc, char** argv) {
   }
 
   // tokenise
-  char** source;
   int n;
-  tokenise(&source, &n, str);
+  tokenise(&source, &n, str, true);
 
   // init
-  address = 0;
   result = (byte*)malloc(0);
 
   // assemble
-  for (int i = 0; i < n;) {
+  while (i < n) {
+    bool newline = true;
+
     if (eq(_, ".pos")) {  // .pos x
       i++;
+
+      expect_space();
 
       int new = atoi(_);  // x
       i++;
@@ -73,6 +103,8 @@ int main(int argc, char** argv) {
       }
     } else if (eq(_, ".align")) {  // .align x
       i++;
+
+      expect_space();
 
       int new = atoi(_);  // x
       i++;
@@ -88,6 +120,8 @@ int main(int argc, char** argv) {
                       2)) {  // .long x // .quad x
       i++;
 
+      expect_space();
+
       int value = atoi(_);
       i++;
 
@@ -97,11 +131,14 @@ int main(int argc, char** argv) {
       strncpy(label, _, strlen(_) - 1);
       i++;
 
+      expect_space();
+
       if (get(address_lookup, label) != -1) {
-        error("duplicate label %s", label);
+        error("duplicate label \"%s\"", label);
       }
 
       set(&address_lookup, label, address);
+      newline = false;
     } else if (eq_any(_, (char*[]){"halt", "nop", "ret"},
                       3)) {  // [halt/nop/ret] -> [halt/nop/ret]
       pushb(s(_));           // [halt/nop/ret]
@@ -119,14 +156,27 @@ int main(int argc, char** argv) {
           _));  // [rrmovl/addl/subl/andl/xorl/cmovle/cmovl/cmove/cmovne/cmovge/cmovg]
       i++;
 
-      pushb((r(_) << 4) | r(__));  // a, b
-      i += 2;
+      expect_space();
+
+      int a = r(_);
+      i++;
+
+      expect(",");
+      expect_space();
+
+      pushb((a << 4) | r(_));  // a, b
+      i++;
     } else if (eq(_, "irmovl")) {  // irmovl v, b -> irmovl f/b v
       pushb(instructions.irmovl);  // irmovl
       i++;
 
+      expect_space();
+
       int v = atoi(_);
       i++;
+
+      expect(",");
+      expect_space();
 
       pushb(0xf0 | r(_));  // b
       i++;
@@ -136,25 +186,45 @@ int main(int argc, char** argv) {
       pushb(instructions.rmmovl);  // rmmovl
       i++;
 
+      expect_space();
+
       int a = r(_);
       i++;
+
+      expect(",");
+      expect_space();
 
       int d = atoi(_);
       i++;
 
+      expect("(");
+
       pushb((a << 4) | r(_));  // a, b
       i++;
+
+      expect(")");
 
       pushi(d);                    // d
     } else if (eq(_, "mrmovl")) {  // mrmovl d(b), a -> mrmovl a b d
       pushb(instructions.mrmovl);  // mrmovl
       i++;
 
+      expect_space();
+
       int d = atoi(_);
       i++;
 
-      pushb((r(__) << 4) | r(_));  // a, b
-      i += 2;
+      expect("(");
+
+      int b = r(_);
+      i++;
+
+      expect(")");
+      expect(",");
+      expect_space();
+
+      pushb((r(_) << 4) | b);  // a, b
+      i++;
 
       pushi(d);  // d
     } else if (eq_any(_,
@@ -164,10 +234,12 @@ int main(int argc, char** argv) {
       pushb(s(_));           // [call/jmp/jle/jl/je/jne/jge/jg]
       i++;
 
+      expect_space();
+
       int l = get(address_lookup, _);
 
       if (l == -1) {
-        error("unknown label %s", _);
+        error("unknown label \"%s\"", _);
       }
 
       pushi(l);  // l
@@ -177,10 +249,16 @@ int main(int argc, char** argv) {
       pushb(s(_));           // [pushl/popl]
       i++;
 
+      expect_space();
+
       pushb((r(_) << 4) | 0xf);  // a/f
       i++;
     } else {
-      error("unknown instruction %s", _);
+      error("unknown instruction \"%s\"", _);
+    }
+
+    if (newline) {
+      expect_newline();
     }
   }
 
