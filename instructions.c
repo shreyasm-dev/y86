@@ -79,7 +79,7 @@ void init_instruction_lookup() {
   set(&instruction_lookup, "popl", instructions.popl);
 }
 
-byte s(char* name) {
+byte s(char *name) {
   init_instruction_lookup();
   return get(instruction_lookup, name);
 }

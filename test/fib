@@ -1,0 +1,10 @@
+main: irmovl $0, %eax
+irmovl $1, %ebx
+irmovl $a, %ecx
+irmovl $1, %edx
+call fib
+halt
+fib: addl %eax, %ebx
+subl %edx, %ecx
+call fib
+ret

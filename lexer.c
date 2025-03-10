@@ -1,7 +1,7 @@
 #include "includes.h"
 #include "util.h"
 
-// simple lexer: just split it by whitespace, parentheses, and commas
+// simple lexer: just splits it by whitespace, parentheses, and commas
 void tokenise(char*** tokens, int* n, char* source, bool include_punctuation) {
   *tokens = (char**)malloc(0);
   *n = 0;
