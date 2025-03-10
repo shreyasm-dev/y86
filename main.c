@@ -1,6 +1,3 @@
-#define _ source[i]
-#define __ source[i + 1]
-
 #include "includes.h"
 #include "instructions.h"
 #include "lexer.h"
@@ -23,7 +20,7 @@ void pushi(int value) {
 
 // TODO: 0x- prefix
 int main(int argc, char** argv) {
-  lookup_init();
+  struct array_map address_lookup = create_map();
 
   // test/argv[1]
   char* filename = (char*)malloc(strlen("test/") + strlen(argv[1]) + 1);
@@ -93,7 +90,8 @@ int main(int argc, char** argv) {
       while (address % new != 0) {
         pushb(instructions.nop);
       }
-    } else if (eq(_, ".long") || eq(_, ".quad")) {
+    } else if (eq_any(_, (char*[]){".long", ".quad"},
+                      2)) {  // .long x // .quad x
       i++;
 
       int value = atoi(_);
@@ -105,17 +103,15 @@ int main(int argc, char** argv) {
       strncpy(label, _, strlen(_) - 1);
       i++;
 
-      if (lookup_get(label) != -1) {
+      if (get(address_lookup, label) != -1) {
         printf("duplicate label: %s\n", label);
         return 1;
       }
 
-      lookup_set(label, address);
-    } else if (eq(_, "halt")) {  // halt -> halt
-      pushb(instructions.halt);  // halt
-      i++;
-    } else if (eq(_, "nop")) {  // nop -> nop
-      pushb(instructions.nop);  // nop
+      set(&address_lookup, label, address);
+    } else if (eq_any(_, (char*[]){"halt", "nop", "ret"},
+                      3)) {  // [halt/nop/ret] -> [halt/nop/ret]
+      pushb(s(_));           // [halt/nop/ret]
       i++;
     } else if (eq(_, "rrmovl")) {  // rrmovl a, b -> rrmovl a b
       pushb(instructions.rrmovl);  // rrmovl
@@ -147,7 +143,15 @@ int main(int argc, char** argv) {
       pushb((a << 4) | r(_));  // a, b
       i++;
 
-      pushi(d);                    // d
+      pushi(d);  // d
+    } else if (eq_any(_, (char*[]){"addl", "subl", "andl", "xorl"},
+                      4)) {  // [addl/subl/andl/xorl] a, b ->
+                             // [addl/subl/andl/xorl] a b
+      pushb(s(_));           // [addl/subl/andl/xorl]
+      i++;
+
+      pushb((r(_) << 4) | r(__));  // a, b
+      i += 2;
     } else if (eq(_, "mrmovl")) {  // mrmovl d(b), a -> mrmovl a b d
       pushb(instructions.mrmovl);  // mrmovl
       i++;
@@ -158,12 +162,15 @@ int main(int argc, char** argv) {
       pushb((r(__) << 4) | r(_));  // a, b
       i += 2;
 
-      pushi(d);                  // d
-    } else if (eq(_, "call")) {  // call l -> call l
-      pushb(instructions.call);  // call
+      pushi(d);  // d
+    } else if (eq_any(_,
+                      (char*[]){"call", "jmp", "jle", "jl", "je", "jne", "jge",
+                                "jg"},
+                      8)) {  // [call/jmp/jle/jl/je/jne/jge/jg] l
+      pushb(s(_));           // [call/jmp/jle/jl/je/jne/jge/jg]
       i++;
 
-      int l = lookup_get(_);
+      int l = get(address_lookup, _);
 
       if (l == -1) {
         printf("unknown label: %s\n", _);
@@ -172,17 +179,9 @@ int main(int argc, char** argv) {
 
       pushi(l);  // l
       i++;
-    } else if (eq(_, "ret")) {  // ret -> ret
-      pushb(instructions.ret);  // ret
-      i++;
-    } else if (eq(_, "pushl")) {  // pushl a -> pushl a/f
-      pushb(instructions.pushl);  // pushl
-      i++;
-
-      pushb((r(_) << 4) | 0xf);  // a/f
-      i++;
-    } else if (eq(_, "popl")) {  // popl a -> popl a/f
-      pushb(instructions.popl);  // popl
+    } else if (eq_any(_, (char*[]){"pushl", "popl"},
+                      2)) {  // [pushl/popl] a -> [pushl/popl] a/f
+      pushb(s(_));           // [pushl/popl]
       i++;
 
       pushb((r(_) << 4) | 0xf);  // a/f

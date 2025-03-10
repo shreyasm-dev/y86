@@ -14,25 +14,25 @@ const struct registers registers = {
     .edi = 0x7,
 };
 
-byte r(char* name) {
-  if (eq(name, "%eax")) {
-    return registers.eax;
-  } else if (eq(name, "%ecx")) {
-    return registers.ecx;
-  } else if (eq(name, "%edx")) {
-    return registers.edx;
-  } else if (eq(name, "%ebx")) {
-    return registers.ebx;
-  } else if (eq(name, "%esp")) {
-    return registers.esp;
-  } else if (eq(name, "%ebp")) {
-    return registers.ebp;
-  } else if (eq(name, "%esi")) {
-    return registers.esi;
-  } else if (eq(name, "%edi")) {
-    return registers.edi;
-  } else {
-    printf("unknown register: %s\n", name);
-    exit(1);
+struct array_map register_lookup;
+
+void init_register_lookup() {
+  if (register_lookup.n > 0) {
+    return;
   }
+
+  register_lookup = create_map();
+  set(&register_lookup, "%eax", registers.eax);
+  set(&register_lookup, "%ecx", registers.ecx);
+  set(&register_lookup, "%edx", registers.edx);
+  set(&register_lookup, "%ebx", registers.ebx);
+  set(&register_lookup, "%esp", registers.esp);
+  set(&register_lookup, "%ebp", registers.ebp);
+  set(&register_lookup, "%esi", registers.esi);
+  set(&register_lookup, "%edi", registers.edi);
+}
+
+byte r(char* name) {
+  init_register_lookup();
+  return get(register_lookup, name);
 }

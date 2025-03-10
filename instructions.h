@@ -1,6 +1,9 @@
 #include "includes.h"
 #include "util.h"
 
+#ifndef INSTRUCTIONS_H
+#define INSTRUCTIONS_H
+
 struct instructions {
   byte halt;
   byte nop;
@@ -37,3 +40,7 @@ struct instructions {
 };
 
 extern const struct instructions instructions;
+
+byte s(char* name);
+
+#endif

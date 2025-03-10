@@ -1,6 +1,9 @@
 #include "includes.h"
 #include "util.h"
 
+#ifndef REGISTERS_H
+#define REGISTERS_H
+
 struct registers {
   byte eax;
   byte ecx;
@@ -15,3 +18,5 @@ struct registers {
 extern const struct registers registers;
 
 byte r(char* name);
+
+#endif
