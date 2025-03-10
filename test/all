@@ -6,6 +6,5 @@ rrmovl %eax, %ecx
 irmovl 6251, %eax
 rmmovl %eax, 6251(%ecx)
 mrmovl 6251(%ecx), %eax
-addl %eax, %ecx
 a: call a
 pushl %eax

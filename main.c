@@ -18,7 +18,8 @@ void pushi(int value) {
   pushb((byte)(value & 0xff));
 }
 
-// TODO: 0x- prefix
+// TODO: 0x- prefix, inflexibility with punctuation, combine rrmovl/opl and
+// cmovxx cmovxx
 int main(int argc, char** argv) {
   struct array_map address_lookup = create_map();
 
@@ -37,7 +38,7 @@ int main(int argc, char** argv) {
   char* str = read_string(filename);
 
   char* expected = read_string(expected_filename);
-  expected[strlen(expected) - 1] = '\0';
+  expected[strlen(expected) - 1] = '\0';  // remove final newline
 
   // remove spaces and newlines
   char** expected_temp;
@@ -113,8 +114,17 @@ int main(int argc, char** argv) {
                       3)) {  // [halt/nop/ret] -> [halt/nop/ret]
       pushb(s(_));           // [halt/nop/ret]
       i++;
-    } else if (eq(_, "rrmovl")) {  // rrmovl a, b -> rrmovl a b
-      pushb(instructions.rrmovl);  // rrmovl
+    } else if (
+        eq_any(
+            _,
+            (char*[]){"rrmovl", "addl", "subl", "andl", "xorl", "cmovle",
+                      "cmovl", "cmove", "cmovne", "cmovge", "cmovg"},
+            11)) {  // [rrmovl/addl/subl/andl/xorl/cmovle/cmovl/cmove/cmovne/cmovge/cmovg]
+                    // a, b ->
+                    // [rrmovl/addl/subl/andl/xorl/cmovle/cmovl/cmove/cmovne/cmovge/cmovg]
+                    // a b
+      pushb(s(
+          _));  // [rrmovl/addl/subl/andl/xorl/cmovle/cmovl/cmove/cmovne/cmovge/cmovg]
       i++;
 
       pushb((r(_) << 4) | r(__));  // a, b
@@ -143,15 +153,7 @@ int main(int argc, char** argv) {
       pushb((a << 4) | r(_));  // a, b
       i++;
 
-      pushi(d);  // d
-    } else if (eq_any(_, (char*[]){"addl", "subl", "andl", "xorl"},
-                      4)) {  // [addl/subl/andl/xorl] a, b ->
-                             // [addl/subl/andl/xorl] a b
-      pushb(s(_));           // [addl/subl/andl/xorl]
-      i++;
-
-      pushb((r(_) << 4) | r(__));  // a, b
-      i += 2;
+      pushi(d);                    // d
     } else if (eq(_, "mrmovl")) {  // mrmovl d(b), a -> mrmovl a b d
       pushb(instructions.mrmovl);  // mrmovl
       i++;
