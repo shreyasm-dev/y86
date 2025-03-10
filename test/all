@@ -1,10 +1,10 @@
 .pos 1
 .align 2
-.quad 6251
+.quad 0x186b
 halt
 rrmovl %eax, %ecx
-irmovl 6251, %eax
-rmmovl %eax, 6251(%ecx)
-mrmovl 6251(%ecx), %eax
+irmovl $186b, %eax
+rmmovl %eax, $186b(%ecx)
+mrmovl $186b(%ecx), %eax
 a: call a
 pushl %eax

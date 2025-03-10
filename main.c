@@ -42,7 +42,6 @@ void expect_newline() {
   i++;
 }
 
-// TODO: 0x- prefix
 int main(int argc, char** argv) {
   struct array_map address_lookup = create_map();
 
@@ -122,10 +121,14 @@ int main(int argc, char** argv) {
 
       expect_space();
 
-      int value = atoi(_);
+      char* s = _;
       i++;
 
-      pushi(value);
+      if (s[0] != '0' || s[1] != 'x') {
+        error("expected hexadecimal number beginning with 0x, got \"%s\"", s);
+      }
+
+      pushi(strtol(s + 2, NULL, 16));      // x
     } else if (_[strlen(_) - 1] == ':') {  // label
       char* label = (char*)malloc(strlen(_));
       strncpy(label, _, strlen(_) - 1);
@@ -172,8 +175,14 @@ int main(int argc, char** argv) {
 
       expect_space();
 
-      int v = atoi(_);
+      char* s = _;
       i++;
+
+      if (s[0] != '$') {
+        error(
+            "expected hexadecimal immediate value beginning with $, got \"%s\"",
+            s);
+      }
 
       expect(",");
       expect_space();
@@ -181,9 +190,9 @@ int main(int argc, char** argv) {
       pushb(0xf0 | r(_));  // b
       i++;
 
-      pushi(v);                    // v
-    } else if (eq(_, "rmmovl")) {  // rmmovl a, d(b) -> rmmovl a b d
-      pushb(instructions.rmmovl);  // rmmovl
+      pushi(strtol(s + 1, NULL, 16));  // v
+    } else if (eq(_, "rmmovl")) {      // rmmovl a, d(b) -> rmmovl a b d
+      pushb(instructions.rmmovl);      // rmmovl
       i++;
 
       expect_space();
@@ -194,8 +203,14 @@ int main(int argc, char** argv) {
       expect(",");
       expect_space();
 
-      int d = atoi(_);
+      char* s = _;
       i++;
+
+      if (s[0] != '$') {
+        error(
+            "expected hexadecimal immediate value beginning with $, got \"%s\"",
+            s);
+      }
 
       expect("(");
 
@@ -204,15 +219,21 @@ int main(int argc, char** argv) {
 
       expect(")");
 
-      pushi(d);                    // d
-    } else if (eq(_, "mrmovl")) {  // mrmovl d(b), a -> mrmovl a b d
-      pushb(instructions.mrmovl);  // mrmovl
+      pushi(strtol(s + 1, NULL, 16));  // d
+    } else if (eq(_, "mrmovl")) {      // mrmovl d(b), a -> mrmovl a b d
+      pushb(instructions.mrmovl);      // mrmovl
       i++;
 
       expect_space();
 
-      int d = atoi(_);
+      char* s = _;
       i++;
+
+      if (s[0] != '$') {
+        error(
+            "expected hexadecimal immediate value beginning with $, got \"%s\"",
+            s);
+      }
 
       expect("(");
 
@@ -226,7 +247,7 @@ int main(int argc, char** argv) {
       pushb((r(_) << 4) | b);  // a, b
       i++;
 
-      pushi(d);  // d
+      pushi(strtol(s + 1, NULL, 16));  // d
     } else if (eq_any(_,
                       (char*[]){"call", "jmp", "jle", "jl", "je", "jne", "jge",
                                 "jg"},
