@@ -44,6 +44,7 @@ void expect_newline() {
 
 int main(int argc, char** argv) {
   struct array_map address_lookup = create_map();
+  char** address_deferred = (char**)malloc(0);
 
   // test/argv[1]
   char* filename = (char*)malloc(strlen("test/") + strlen(argv[1]) + 1);
@@ -84,6 +85,9 @@ int main(int argc, char** argv) {
   // assemble
   while (i < n) {
     bool newline = true;
+
+    push(address_deferred, NULL, address);
+    address--;  // push increments address
 
     if (eq(_, ".pos")) {  // .pos x
       i++;
@@ -257,13 +261,8 @@ int main(int argc, char** argv) {
 
       expect_space();
 
-      int l = get(address_lookup, _);
-
-      if (l == -1) {
-        error("unknown label \"%s\"", _);
-      }
-
-      pushi(l);  // l
+      address_deferred[address] = _;
+      pushi(0);  // l
       i++;
     } else if (eq_any(_, (char*[]){"pushl", "popl"},
                       2)) {  // [pushl/popl] a -> [pushl/popl] a/f
@@ -280,6 +279,20 @@ int main(int argc, char** argv) {
 
     if (newline) {
       expect_newline();
+    }
+  }
+
+  // resolve all addresses
+  for (int i = 0; i < address; i++) {
+    if (address_deferred[i] != NULL) {
+      int a = get(address_lookup, address_deferred[i]);
+
+      if (a == -1) {
+        error("unknown label \"%s\"", address_deferred[i]);
+      }
+
+      result[i] = (byte)((a >> 8) & 0xff);
+      result[i + 1] = (byte)(a & 0xff);
     }
   }
 
