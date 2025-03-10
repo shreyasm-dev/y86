@@ -37,7 +37,13 @@ struct array_map create_map() {
   return m;
 }
 
-bool eq(char* a, char* b) { return !strcmp(a, b); }
+bool eq(char* a, char* b) {
+  if (a == NULL || b == NULL) {
+    return false;
+  }
+
+  return !strcmp(a, b);
+}
 
 bool eq_any(char* a, char** b, int n) {
   for (int i = 0; i < n; i++) {

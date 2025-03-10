@@ -24,6 +24,11 @@
 
 typedef uint8_t byte;
 
+typedef struct deferred_address {
+  int address;
+  char* label;
+} deferred_address;
+
 typedef struct array_map {
   char** keys;
   int* values;

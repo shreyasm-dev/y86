@@ -1,0 +1,39 @@
+.pos 0
+init: irmovl stack, %esp
+irmovl stack, %ebp
+call main
+halt
+.align 4
+array: .long 0xd
+.long 0xc0
+.long 0xb00
+.long 0xa000
+main: pushl %ebp
+rrmovl %esp, %ebp
+irmovl $4, %eax
+pushl %eax
+irmovl array, %edx
+pushl %edx
+call sum
+rrmovl %ebp, %esp
+popl %ebp
+ret
+sum: pushl %ebp
+rrmovl %esp, %ebp
+mrmovl 8(%ebp), %ecx
+mrmovl 12(%ebp), %edx
+xorl %eax, %eax
+andl %edx, %edx
+je end
+loop: mrmovl 0(%ecx), %esi
+addl %esi, %eax
+irmovl $4, %ebx
+addl %ebx, %ecx
+irmovl $-1, %ebx
+addl %ebx, %edx
+jne loop
+end: rrmovl %ebp, %esp
+popl %ebp
+ret
+.pos 0x100
+stack: nop

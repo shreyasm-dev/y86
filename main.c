@@ -8,12 +8,16 @@ int i = 0;
 int address = 0;
 byte* result;
 char** source;
+deferred_address* address_deferred;
+int deferred_n = 0;
 
 void pushb(byte value) { push(result, value, address); }
 
 void pushi(int value) {
-  pushb((byte)((value >> 8) & 0xff));
   pushb((byte)(value & 0xff));
+  pushb((byte)((value >> 8) & 0xff));
+  pushb((byte)((value >> 16) & 0xff));
+  pushb((byte)((value >> 24) & 0xff));
 }
 
 void expect(char* expected) {
@@ -22,6 +26,33 @@ void expect(char* expected) {
   }
 
   i++;
+}
+
+int parse_number(char* s, bool push) {
+  int value = 0;
+
+  if (s[0] == '$') {
+    value = strtol(s + 1, NULL, 16);
+  } else if (s[0] == '0' && s[1] == 'x') {
+    value = strtol(s + 2, NULL, 16);
+  } else if (s[0] >= '0' && s[0] <= '9') {
+    value = atoi(s);
+  } else if (s[0] != '(') {
+    struct deferred_address deferred = {
+        .address = address,
+        .label = s,
+    };
+
+    push(address_deferred, deferred, deferred_n);
+
+    value = 0;
+  }
+
+  if (push) {
+    pushi(value);
+  }
+
+  return value;
 }
 
 void expect_space() {
@@ -44,7 +75,6 @@ void expect_newline() {
 
 int main(int argc, char** argv) {
   struct array_map address_lookup = create_map();
-  char** address_deferred = (char**)malloc(0);
 
   // test/argv[1]
   char* filename = (char*)malloc(strlen("test/") + strlen(argv[1]) + 1);
@@ -81,27 +111,26 @@ int main(int argc, char** argv) {
 
   // init
   result = (byte*)malloc(0);
+  address_deferred = (deferred_address*)malloc(0);
 
   // assemble
   while (i < n) {
     bool newline = true;
-
-    push(address_deferred, NULL, address);
-    address--;  // push increments address
 
     if (eq(_, ".pos")) {  // .pos x
       i++;
 
       expect_space();
 
-      int new = atoi(_);  // x
+      int x = parse_number(_, false);  // x
       i++;
 
-      if (new < address) {
-        error("cannot move address back (current address is %d)", address);
+      if (x < address) {
+        error("cannot move address back (current address is %d, got %d)",
+              address, x);
       }
 
-      while (address < new) {
+      while (address < x) {
         pushb(instructions.nop);
       }
     } else if (eq(_, ".align")) {  // .align x
@@ -109,14 +138,14 @@ int main(int argc, char** argv) {
 
       expect_space();
 
-      int new = atoi(_);  // x
+      int x = parse_number(_, false);
       i++;
 
-      if (new <= 0) {
-        error("alignment must be positive (got %d)", new);
+      if (x <= 0) {
+        error("alignment must be positive (got %d)", x);
       }
 
-      while (address % new != 0) {
+      while (address % x != 0) {
         pushb(instructions.nop);
       }
     } else if (eq_any(_, (char*[]){".long", ".quad"},
@@ -125,14 +154,8 @@ int main(int argc, char** argv) {
 
       expect_space();
 
-      char* s = _;
+      parse_number(_, true);  // x
       i++;
-
-      if (s[0] != '0' || s[1] != 'x') {
-        error("expected hexadecimal number beginning with 0x, got \"%s\"", s);
-      }
-
-      pushi(strtol(s + 2, NULL, 16));      // x
     } else if (_[strlen(_) - 1] == ':') {  // label
       char* label = (char*)malloc(strlen(_));
       strncpy(label, _, strlen(_) - 1);
@@ -179,14 +202,8 @@ int main(int argc, char** argv) {
 
       expect_space();
 
-      char* s = _;
+      char* v = _;
       i++;
-
-      if (s[0] != '$') {
-        error(
-            "expected hexadecimal immediate value beginning with $, got \"%s\"",
-            s);
-      }
 
       expect(",");
       expect_space();
@@ -194,9 +211,9 @@ int main(int argc, char** argv) {
       pushb(0xf0 | r(_));  // b
       i++;
 
-      pushi(strtol(s + 1, NULL, 16));  // v
-    } else if (eq(_, "rmmovl")) {      // rmmovl a, d(b) -> rmmovl a b d
-      pushb(instructions.rmmovl);      // rmmovl
+      parse_number(v, true);       // v
+    } else if (eq(_, "rmmovl")) {  // rmmovl a, d(b) -> rmmovl a b d
+      pushb(instructions.rmmovl);  // rmmovl
       i++;
 
       expect_space();
@@ -207,14 +224,8 @@ int main(int argc, char** argv) {
       expect(",");
       expect_space();
 
-      char* s = _;
+      char* d = _;
       i++;
-
-      if (s[0] != '$') {
-        error(
-            "expected hexadecimal immediate value beginning with $, got \"%s\"",
-            s);
-      }
 
       expect("(");
 
@@ -223,21 +234,15 @@ int main(int argc, char** argv) {
 
       expect(")");
 
-      pushi(strtol(s + 1, NULL, 16));  // d
-    } else if (eq(_, "mrmovl")) {      // mrmovl d(b), a -> mrmovl a b d
-      pushb(instructions.mrmovl);      // mrmovl
+      parse_number(d, true);       // d
+    } else if (eq(_, "mrmovl")) {  // mrmovl d(b), a -> mrmovl a b d
+      pushb(instructions.mrmovl);  // mrmovl
       i++;
 
       expect_space();
 
-      char* s = _;
+      char* d = _;
       i++;
-
-      if (s[0] != '$') {
-        error(
-            "expected hexadecimal immediate value beginning with $, got \"%s\"",
-            s);
-      }
 
       expect("(");
 
@@ -251,7 +256,7 @@ int main(int argc, char** argv) {
       pushb((r(_) << 4) | b);  // a, b
       i++;
 
-      pushi(strtol(s + 1, NULL, 16));  // d
+      parse_number(d, true);  // d
     } else if (eq_any(_,
                       (char*[]){"call", "jmp", "jle", "jl", "je", "jne", "jge",
                                 "jg"},
@@ -261,8 +266,7 @@ int main(int argc, char** argv) {
 
       expect_space();
 
-      address_deferred[address] = _;
-      pushi(0);  // l
+      parse_number(_, true);  // l
       i++;
     } else if (eq_any(_, (char*[]){"pushl", "popl"},
                       2)) {  // [pushl/popl] a -> [pushl/popl] a/f
@@ -283,17 +287,19 @@ int main(int argc, char** argv) {
   }
 
   // resolve all addresses
-  for (int i = 0; i < address; i++) {
-    if (address_deferred[i] != NULL) {
-      int a = get(address_lookup, address_deferred[i]);
+  for (int i = 0; i < deferred_n; i++) {
+    int a = get(address_lookup, address_deferred[i].label);
 
-      if (a == -1) {
-        error("unknown label \"%s\"", address_deferred[i]);
-      }
-
-      result[i] = (byte)((a >> 8) & 0xff);
-      result[i + 1] = (byte)(a & 0xff);
+    if (a == -1) {
+      error("unknown label \"%s\"", address_deferred[i].label);
     }
+
+    int address = address_deferred[i].address;
+
+    result[address] = (byte)(a & 0xff);
+    result[address + 1] = (byte)((a >> 8) & 0xff);
+    result[address + 2] = (byte)((a >> 16) & 0xff);
+    result[address + 3] = (byte)((a >> 24) & 0xff);
   }
 
   char* result_str = (char*)malloc(0);
