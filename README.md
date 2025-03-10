@@ -14,7 +14,6 @@ Available tests:
 
 ## Notes
 
-- Spacing is very strict
 - No comments
 
 ## Organisation

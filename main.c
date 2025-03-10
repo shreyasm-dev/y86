@@ -55,22 +55,20 @@ int parse_number(char* s, bool push) {
   return value;
 }
 
-void expect_space() {
+void expect_spaces() {
   // it's one character if it's whitespace anyway, so only looking at the first
   // character is fine
-  if (!ceq_any(_[0], " \t")) {
-    error("expected space, got \"%s\"", _);
+  if (_ != NULL && ceq_any(_[0], " \t")) {
+    i++;
+    expect_spaces();
   }
-
-  i++;
 }
 
-void expect_newline() {
-  if (!ceq_any(_[0], "\n\r")) {
-    error("expected newline, got \"%s\"", _);
+void expect_whitespace() {
+  if (_ != NULL && ceq_any(_[0], " \t\n\r")) {
+    i++;
+    expect_whitespace();
   }
-
-  i++;
 }
 
 int main(int argc, char** argv) {
@@ -115,12 +113,12 @@ int main(int argc, char** argv) {
 
   // assemble
   while (i < n) {
-    bool newline = true;
+    expect_whitespace();
 
     if (eq(_, ".pos")) {  // .pos x
       i++;
 
-      expect_space();
+      expect_spaces();
 
       int x = parse_number(_, false);  // x
       i++;
@@ -136,7 +134,7 @@ int main(int argc, char** argv) {
     } else if (eq(_, ".align")) {  // .align x
       i++;
 
-      expect_space();
+      expect_spaces();
 
       int x = parse_number(_, false);
       i++;
@@ -152,7 +150,7 @@ int main(int argc, char** argv) {
                       2)) {  // .long x // .quad x
       i++;
 
-      expect_space();
+      expect_spaces();
 
       parse_number(_, true);  // x
       i++;
@@ -161,14 +159,11 @@ int main(int argc, char** argv) {
       strncpy(label, _, strlen(_) - 1);
       i++;
 
-      expect_space();
-
       if (get(address_lookup, label) != -1) {
         error("duplicate label \"%s\"", label);
       }
 
       set(&address_lookup, label, address);
-      newline = false;
     } else if (eq_any(_, (char*[]){"halt", "nop", "ret"},
                       3)) {  // [halt/nop/ret] -> [halt/nop/ret]
       pushb(s(_));           // [halt/nop/ret]
@@ -186,13 +181,13 @@ int main(int argc, char** argv) {
           _));  // [rrmovl/addl/subl/andl/xorl/cmovle/cmovl/cmove/cmovne/cmovge/cmovg]
       i++;
 
-      expect_space();
+      expect_spaces();
 
       int a = r(_);
       i++;
 
       expect(",");
-      expect_space();
+      expect_spaces();
 
       pushb((a << 4) | r(_));  // a, b
       i++;
@@ -200,13 +195,13 @@ int main(int argc, char** argv) {
       pushb(instructions.irmovl);  // irmovl
       i++;
 
-      expect_space();
+      expect_spaces();
 
       char* v = _;
       i++;
 
       expect(",");
-      expect_space();
+      expect_spaces();
 
       pushb(0xf0 | r(_));  // b
       i++;
@@ -216,13 +211,13 @@ int main(int argc, char** argv) {
       pushb(instructions.rmmovl);  // rmmovl
       i++;
 
-      expect_space();
+      expect_spaces();
 
       int a = r(_);
       i++;
 
       expect(",");
-      expect_space();
+      expect_spaces();
 
       char* d = _;
       i++;
@@ -239,7 +234,7 @@ int main(int argc, char** argv) {
       pushb(instructions.mrmovl);  // mrmovl
       i++;
 
-      expect_space();
+      expect_spaces();
 
       char* d = _;
       i++;
@@ -251,7 +246,7 @@ int main(int argc, char** argv) {
 
       expect(")");
       expect(",");
-      expect_space();
+      expect_spaces();
 
       pushb((r(_) << 4) | b);  // a, b
       i++;
@@ -264,7 +259,7 @@ int main(int argc, char** argv) {
       pushb(s(_));           // [call/jmp/jle/jl/je/jne/jge/jg]
       i++;
 
-      expect_space();
+      expect_spaces();
 
       parse_number(_, true);  // l
       i++;
@@ -273,7 +268,7 @@ int main(int argc, char** argv) {
       pushb(s(_));           // [pushl/popl]
       i++;
 
-      expect_space();
+      expect_spaces();
 
       pushb((r(_) << 4) | 0xf);  // a/f
       i++;
@@ -281,9 +276,7 @@ int main(int argc, char** argv) {
       error("unknown instruction \"%s\"", _);
     }
 
-    if (newline) {
-      expect_newline();
-    }
+    expect_whitespace();
   }
 
   // resolve all addresses
