@@ -3,6 +3,11 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#define push(to, x, n) { \
+  to = realloc(to, (n + 1) * sizeof(x)); \
+  (to)[(n)++] = x; \
+}
+
 typedef uint8_t byte;
 
 typedef struct array_map {

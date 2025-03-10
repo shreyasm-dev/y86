@@ -20,12 +20,9 @@ int set(struct array_map* map, char* key, int value) {
     }
   }
 
-  (*map).keys = (char**)realloc((*map).keys, ((*map).n + 1) * sizeof(char*));
-  (*map).values = (int*)realloc((*map).values, ((*map).n + 1) * sizeof(int));
-
-  (*map).keys[(*map).n] = key;
-  (*map).values[(*map).n] = value;
-  (*map).n++;
+  push((*map).keys, key, (*map).n);
+  (*map).n--;
+  push((*map).values, value, (*map).n);
 
   return 0;
 }
@@ -67,10 +64,10 @@ char* read_string(char* filename) {
 
   char* str = (char*)malloc(0);
   char c;
+  int n = 0;
 
   while ((c = fgetc(file)) != EOF) {
-    str = (char*)realloc(str, (strlen(str) + 1) * sizeof(char));
-    str[strlen(str)] = c;
+    push(str, c, n);
   }
 
   fclose(file);

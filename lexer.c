@@ -7,6 +7,7 @@ void tokenise(char*** tokens, int* n, char* source) {
   *n = 0;
 
   char* current = (char*)malloc(0);
+  int m = 0;
 
   for (int i = 0; i < strlen(source); i++) {
     if (ceq_any(_, " \n\t\r(),")) {
@@ -15,20 +16,18 @@ void tokenise(char*** tokens, int* n, char* source) {
       }
 
       // add current to tokens
-      *tokens = (char**)realloc(*tokens, (*n + 1) * sizeof(char*));
-      (*tokens)[(*n)++] = current;
+      push(*tokens, current, *n);
 
       // reset current
       current = (char*)malloc(0);
+      m = 0;
     } else {
       // append to current
-      current = (char*)realloc(current, (strlen(current) + 1) * sizeof(char));
-      current[strlen(current)] = _;
+      push(current, _, m);
     }
   }
 
   if (!eq(current, "")) {
-    *tokens = (char**)realloc(*tokens, (*n + 1) * sizeof(char*));
-    (*tokens)[(*n)++] = current;
+    push(*tokens, current, *n);
   }
 }

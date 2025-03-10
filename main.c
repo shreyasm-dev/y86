@@ -7,11 +7,7 @@
 int address;
 byte* result;
 
-void pushb(byte value) {
-  result = (byte*)realloc(result, (address + 1) * sizeof(byte));
-  result[address] = value;
-  address++;
-}
+void pushb(byte value) { push(result, value, address); }
 
 void pushi(int value) {
   pushb((byte)((value >> 8) & 0xff));
@@ -200,6 +196,7 @@ int main(int argc, char** argv) {
   for (int i = 0; i < address; i++) {
     char* temp = (char*)malloc(3);
     sprintf(temp, "%02x", result[i]);
+
     result_str = (char*)realloc(result_str, strlen(result_str) + 3 + 1);
     strcat(result_str, temp);
 
