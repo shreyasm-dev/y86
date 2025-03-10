@@ -8,6 +8,20 @@
   (to)[(n)++] = x; \
 }
 
+#define success(...) { \
+  printf("\033[0;32m"); \
+  printf(__VA_ARGS__); \
+  printf("\033[0m\n"); \
+  exit(0); \
+}
+
+#define error(...) { \
+  printf("\033[0;31m"); \
+  printf(__VA_ARGS__); \
+  printf("\033[0m\n"); \
+  exit(1); \
+}
+
 typedef uint8_t byte;
 
 typedef struct array_map {

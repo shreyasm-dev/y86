@@ -1,0 +1,5 @@
+{
+  "files.associations": {
+    "**/test/**": "asm-intel-x86-generic"
+  }
+}

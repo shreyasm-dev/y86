@@ -14,8 +14,7 @@ void pushi(int value) {
   pushb((byte)(value & 0xff));
 }
 
-// TODO: 0x- prefix, inflexibility with punctuation, combine rrmovl/opl and
-// cmovxx cmovxx
+// TODO: 0x- prefix, inflexibility with punctuation
 int main(int argc, char** argv) {
   struct array_map address_lookup = create_map();
 
@@ -66,8 +65,7 @@ int main(int argc, char** argv) {
       i++;
 
       if (new < address) {
-        printf("cannot move address back\n");
-        return 1;
+        error("cannot move address back (current address is %d)", address);
       }
 
       while (address < new) {
@@ -80,8 +78,7 @@ int main(int argc, char** argv) {
       i++;
 
       if (new <= 0) {
-        printf("alignment must be positive\n");
-        return 1;
+        error("alignment must be positive (got %d)", new);
       }
 
       while (address % new != 0) {
@@ -101,8 +98,7 @@ int main(int argc, char** argv) {
       i++;
 
       if (get(address_lookup, label) != -1) {
-        printf("duplicate label: %s\n", label);
-        return 1;
+        error("duplicate label %s", label);
       }
 
       set(&address_lookup, label, address);
@@ -171,8 +167,7 @@ int main(int argc, char** argv) {
       int l = get(address_lookup, _);
 
       if (l == -1) {
-        printf("unknown label: %s\n", _);
-        return 1;
+        error("unknown label %s", _);
       }
 
       pushi(l);  // l
@@ -185,9 +180,7 @@ int main(int argc, char** argv) {
       pushb((r(_) << 4) | 0xf);  // a/f
       i++;
     } else {
-      printf("%d\n", i);
-      printf("unknown instruction: %s\n", _);
-      return 1;
+      error("unknown instruction %s", _);
     }
   }
 
@@ -206,8 +199,8 @@ int main(int argc, char** argv) {
   printf("— ");
 
   if (strcmp(result_str, expected) == 0) {
-    printf("success\n");
-  } else {
-    printf("failure - expected %s, got %s\n", expected, result_str);
+    success("success");
   }
+
+  error("failure - expected %s, got %s", expected, result_str);
 }
