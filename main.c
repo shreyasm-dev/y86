@@ -8,7 +8,7 @@ int i = 0;
 int address = 0;
 byte* result;
 char** source;
-deferred_address* address_deferred;
+deferred_address* deferred_addresses;
 int deferred_n = 0;
 
 void pushb(byte value) { push(result, value, address); }
@@ -21,14 +21,14 @@ void pushi(int value) {
 }
 
 void expect(char* expected) {
-  if (!eq(_, expected)) {
+  if (_ == NULL || !eq(_, expected)) {
     error("expected \"%s\", got \"%s\"", expected, _);
   }
 
   i++;
 }
 
-int parse_number(char* s, bool push) {
+int expect_number(char* s, bool push) {
   int value = 0;
 
   if (s[0] == '$') {
@@ -43,7 +43,7 @@ int parse_number(char* s, bool push) {
         .label = s,
     };
 
-    push(address_deferred, deferred, deferred_n);
+    push(deferred_addresses, deferred, deferred_n);
 
     value = 0;
   }
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
 
   // init
   result = (byte*)malloc(0);
-  address_deferred = (deferred_address*)malloc(0);
+  deferred_addresses = (deferred_address*)malloc(0);
 
   // assemble
   while (i < n) {
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
 
       expect_spaces();
 
-      int x = parse_number(_, false);  // x
+      int x = expect_number(_, false);  // x
       i++;
 
       if (x < address) {
@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
 
       expect_spaces();
 
-      int x = parse_number(_, false);
+      int x = expect_number(_, false);
       i++;
 
       if (x <= 0) {
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
 
       expect_spaces();
 
-      parse_number(_, true);  // x
+      expect_number(_, true);  // x
       i++;
     } else if (_[strlen(_) - 1] == ':') {  // label
       char* label = (char*)malloc(strlen(_));
@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
       pushb(0xf0 | r(_));  // b
       i++;
 
-      parse_number(v, true);       // v
+      expect_number(v, true);      // v
     } else if (eq(_, "rmmovl")) {  // rmmovl a, d(b) -> rmmovl a b d
       pushb(instructions.rmmovl);  // rmmovl
       i++;
@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
 
       expect(")");
 
-      parse_number(d, true);       // d
+      expect_number(d, true);      // d
     } else if (eq(_, "mrmovl")) {  // mrmovl d(b), a -> mrmovl a b d
       pushb(instructions.mrmovl);  // mrmovl
       i++;
@@ -251,7 +251,7 @@ int main(int argc, char** argv) {
       pushb((r(_) << 4) | b);  // a, b
       i++;
 
-      parse_number(d, true);  // d
+      expect_number(d, true);  // d
     } else if (eq_any(_,
                       (char*[]){"call", "jmp", "jle", "jl", "je", "jne", "jge",
                                 "jg"},
@@ -261,7 +261,7 @@ int main(int argc, char** argv) {
 
       expect_spaces();
 
-      parse_number(_, true);  // l
+      expect_number(_, true);  // l
       i++;
     } else if (eq_any(_, (char*[]){"pushl", "popl"},
                       2)) {  // [pushl/popl] a -> [pushl/popl] a/f
@@ -281,13 +281,13 @@ int main(int argc, char** argv) {
 
   // resolve all addresses
   for (int i = 0; i < deferred_n; i++) {
-    int a = get(address_lookup, address_deferred[i].label);
+    int a = get(address_lookup, deferred_addresses[i].label);
 
     if (a == -1) {
-      error("unknown label \"%s\"", address_deferred[i].label);
+      error("unknown label \"%s\"", deferred_addresses[i].label);
     }
 
-    int address = address_deferred[i].address;
+    int address = deferred_addresses[i].address;
 
     result[address] = (byte)(a & 0xff);
     result[address + 1] = (byte)((a >> 8) & 0xff);
@@ -299,9 +299,10 @@ int main(int argc, char** argv) {
 
   for (int i = 0; i < address; i++) {
     char* temp = (char*)malloc(3);
-    sprintf(temp, "%02x", result[i]);
+    snprintf(temp, sizeof(temp), "%02x", result[i]);
 
-    result_str = (char*)realloc(result_str, strlen(result_str) + 3 + 1);
+    result_str =
+        (char*)realloc(result_str, strlen(result_str) + strlen(temp) + 1);
     strcat(result_str, temp);
 
     printf("%02x ", result[i]);
@@ -309,7 +310,7 @@ int main(int argc, char** argv) {
 
   printf("— ");
 
-  if (strcmp(result_str, expected) == 0) {
+  if (eq(result_str, expected)) {
     success("success");
   }
 

@@ -23,7 +23,7 @@ void tokenise(char*** tokens, int* n, char* source, bool include_punctuation) {
       if (include_punctuation) {
         // add _ to tokens
         char* _str = (char*)malloc(2);
-        sprintf(_str, "%c", _);
+        snprintf(_str, sizeof(_str), "%c", _);
         push(*tokens, _str, *n);
       }
     } else {
