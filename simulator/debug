@@ -1,0 +1,6 @@
+#!/bin/bash
+
+gcc main.c util.c -g -o main
+lldb ./main $@
+rm main
+rm -rf main.dSYM
