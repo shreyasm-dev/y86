@@ -1,5 +1,18 @@
 {
   "files.associations": {
-    "**/test/**": "asm-intel-x86-generic"
+    "*.ejs": "html",
+    "run": "shellscript",
+    ".modularrc": "json",
+    "*.html": "html",
+    "*.vue": "vue",
+    "*.sql": "sql",
+    "*.css": "css",
+    "*.pug": "jade",
+    "LICENSE": "plaintext",
+    "*.eta": "html",
+    "*.kts": "kotlin",
+    "*.vto": "html",
+    "**/test/**": "asm-intel-x86-generic",
+    "includes.h": "c"
   }
 }

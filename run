@@ -1,5 +1,5 @@
 #!/bin/bash
 
-gcc main.c util.c -o main
+gcc $1/*.c common/*.c -o main
 ./main $@
 rm main

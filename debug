@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gcc main.c util.c -g -o main
+gcc $1/*.c common/*.c -g -o main
 lldb ./main $@
 rm main
 rm -rf main.dSYM

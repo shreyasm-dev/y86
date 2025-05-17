@@ -1,7 +1,4 @@
-#include "registers.h"
-
 #include "includes.h"
-#include "util.h"
 
 const struct registers registers = {
     .eax = 0x0,

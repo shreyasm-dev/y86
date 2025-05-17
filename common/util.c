@@ -1,5 +1,3 @@
-#include "util.h"
-
 #include "includes.h"
 
 int get(struct array_map map, char* key) {

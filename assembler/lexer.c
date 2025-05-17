@@ -1,5 +1,4 @@
-#include "includes.h"
-#include "util.h"
+#include "../common/includes.h"
 
 // simple lexer: just splits it by whitespace, parentheses, and commas
 void tokenise(char*** tokens, int* n, char* source, bool include_punctuation) {

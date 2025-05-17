@@ -1,8 +1,5 @@
-#include "includes.h"
-#include "instructions.h"
+#include "../common/includes.h"
 #include "lexer.h"
-#include "registers.h"
-#include "util.h"
 
 int i = 0;
 int address = 0;
@@ -74,15 +71,19 @@ void expect_whitespace() {
 int main(int argc, char** argv) {
   struct array_map address_lookup = create_map();
 
-  // test/argv[1]
-  char* filename = (char*)malloc(strlen("test/") + strlen(argv[1]) + 1);
-  strcat(filename, "test/");
+  // argv[1]/test/argv[2]
+  char* filename = (char*)malloc(strlen(argv[1]) + strlen("/test/") +
+                                  strlen(argv[2]) + 1);
   strcat(filename, argv[1]);
+  strcat(filename, "/test/");
+  strcat(filename, argv[2]);
 
-  char* expected_filename = (char*)malloc(strlen("test/") + strlen(argv[1]) +
-                                          strlen("-expected") + 1);
-  strcat(expected_filename, "test/");
+  char* expected_filename = (char*)malloc(strlen(argv[1]) +
+                                          strlen("/test/") +
+                                          strlen(argv[2]) + 1);
   strcat(expected_filename, argv[1]);
+  strcat(expected_filename, "/test/");
+  strcat(expected_filename, argv[2]);
   strcat(expected_filename, "-expected");
 
   // read files
