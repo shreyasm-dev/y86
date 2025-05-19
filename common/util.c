@@ -78,3 +78,30 @@ char* read_string(char* filename) {
 
   return str;
 }
+
+byte* read_ascii_hex(char* filename, long* n) {
+  char* str = read_string(filename);
+  *n = strlen(str);
+
+  if (*n % 2 != 0) {
+    error("expected even number of hex digits");
+  }
+
+  *n /= 2;
+
+  byte* buf = (byte*)malloc(*n * sizeof(byte));
+
+  for (int i = 0; i < *n; i++) {
+    char* hex = (char*)malloc(3);
+    hex[0] = str[2 * i];
+    hex[1] = str[(2 * i) + 1];
+    hex[2] = '\0';
+
+    buf[i] = (byte)strtol(hex, NULL, 16);
+    free(hex);
+  }
+
+  free(str);
+
+  return buf;
+}

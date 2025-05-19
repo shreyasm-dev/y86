@@ -43,6 +43,7 @@ void init_instruction_lookup() {
   }
 
   instruction_lookup = create_map();
+
   set(&instruction_lookup, "halt", instructions.halt);
   set(&instruction_lookup, "nop", instructions.nop);
 

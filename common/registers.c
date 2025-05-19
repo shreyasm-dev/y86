@@ -19,6 +19,7 @@ void init_register_lookup() {
   }
 
   register_lookup = create_map();
+
   set(&register_lookup, "%eax", registers.eax);
   set(&register_lookup, "%ecx", registers.ecx);
   set(&register_lookup, "%edx", registers.edx);

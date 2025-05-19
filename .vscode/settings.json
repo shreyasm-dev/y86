@@ -14,5 +14,6 @@
     "*.vto": "html",
     "**/test/**": "asm-intel-x86-generic",
     "includes.h": "c"
-  }
+  },
+  "deno.enable": true
 }
