@@ -110,3 +110,7 @@ byte* read_ascii_hex(char* filename, long* n) {
 
   return buf;
 }
+
+bool negative(word n) {
+  return n >> 31;
+}

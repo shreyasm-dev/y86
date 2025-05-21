@@ -20,16 +20,33 @@ int main(int argc, char** argv) {
 
     if (instruction == instructions.halt) {  //
       break;
-    } else if (instruction == instructions.nop) {     //
-    } else if (instruction == instructions.rrmovl) {  // [src / dst]
-      store.registers[nr[1]] = store.registers[nr[0]];
+    } else if (instruction == instructions.nop) {  //
+    } else if (_$$(rrmovl)) {                      // [src / dst]
+      bool move = false;
+
+      if (instruction == instructions.rrmovl) {
+        move = true;
+      } else if (instruction == instructions.cmovle) {
+        move = (store.sign ^ store.overflow) | store.zero;
+      } else if (instruction == instructions.cmovl) {
+        move = store.sign ^ store.overflow;
+      } else if (instruction == instructions.cmove) {
+        move = store.zero;
+      } else if (instruction == instructions.cmovne) {
+        move = !store.zero;
+      } else if (instruction == instructions.cmovge) {
+        move = !(store.sign ^ store.overflow);
+      } else if (instruction == instructions.cmovg) {
+        move = !((store.sign ^ store.overflow) | store.zero);
+      } else {
+        unreachable();
+      }
+
+      if (move) {
+        store.registers[nr[1]] = store.registers[nr[0]];
+      }
+
       i++;
-    } else if (instruction == instructions.cmovle) {
-    } else if (instruction == instructions.cmovl) {
-    } else if (instruction == instructions.cmove) {
-    } else if (instruction == instructions.cmovne) {
-    } else if (instruction == instructions.cmovge) {
-    } else if (instruction == instructions.cmovg) {
     } else if (instruction == instructions.irmovl) {  // [f / dst] [[[[val]]]]
       byte dst = nr[1];
       i++;
@@ -45,7 +62,7 @@ int main(int argc, char** argv) {
       word offset = nw;
       i += 4;
 
-      m(store.registers[dst] + offset, store.registers[src]);
+      mw(store.registers[dst] + offset, store.registers[src]);
     } else if (instruction ==
                instructions.mrmovl) {  // [src / dst] [[[[offset]]]]
       byte src = nr[0];
@@ -56,33 +73,77 @@ int main(int argc, char** argv) {
       i += 4;
 
       store.registers[dst] = mr(store.registers[src] + offset);
-    } else if (instruction == instructions.addl) {  // [src / dst]
-      store.registers[nr[1]] += store.registers[nr[0]];
+    } else if (_$$(addl)) {  // [src / dst]
+      word src = store.registers[nr[0]];
+      word* dst = &store.registers[nr[1]];
+
+      store.overflow =
+          !(negative(src) ^ negative(*dst));  // i.e. are the signs the same?
+                                              // can't overflow if they're not
+
+      if (instruction == instructions.addl) {
+        *dst = src + *dst;
+        store.overflow =
+            store.overflow &&
+            (negative(src) !=
+             negative(*dst));  // if the sign changed, it overflowed
+      } else if (instruction == instructions.subl) {
+        *dst = src - *dst;
+        store.overflow = store.overflow && (negative(src) != negative(*dst));
+      } else if (instruction == instructions.andl) {
+        *dst = src & *dst;
+        store.overflow = 0;
+      } else if (instruction == instructions.xorl) {
+        *dst = src ^ *dst;
+        store.overflow = 0;
+      } else {
+        unreachable();
+      }
+
+      store.sign = negative(*dst);
+      store.zero = *dst == 0;
+
       i++;
-    } else if (instruction == instructions.subl) {  // [src / dst]
-      store.registers[nr[1]] -= store.registers[nr[0]];
-      i++;
-    } else if (instruction == instructions.andl) {  // [src / dst]
-      store.registers[nr[1]] &= store.registers[nr[0]];
-      i++;
-    } else if (instruction == instructions.xorl) {  // [src / dst]
-      store.registers[nr[1]] ^= store.registers[nr[0]];
-      i++;
-    } else if (instruction == instructions.jmp) {  // [[[[dst]]]]
-    } else if (instruction == instructions.jle) {  // [[[[dst]]]]
-    } else if (instruction == instructions.jl) {   // [[[[dst]]]]
-    } else if (instruction == instructions.je) {   // [[[[dst]]]]
-    } else if (instruction == instructions.jne) {  // [[[[dst]]]]
-    } else if (instruction == instructions.jge) {  // [[[[dst]]]]
-    } else if (instruction == instructions.jg) {   // [[[[dst]]]]
-    } else if (instruction == instructions.call) {
-    } else if (instruction == instructions.ret) {
+    } else if (_$$(jmp)) {  // [[[[dst]]]]
+      bool jump = false;
+
+      if (instruction == instructions.jmp) {
+        jump = true;
+      } else if (instruction == instructions.jle) {
+        jump = (store.sign ^ store.overflow) | store.zero;
+      } else if (instruction == instructions.jl) {
+        jump = store.sign ^ store.overflow;
+      } else if (instruction == instructions.je) {
+        jump = store.zero;
+      } else if (instruction == instructions.jne) {
+        jump = !store.zero;
+      } else if (instruction == instructions.jge) {
+        jump = !(store.sign ^ store.overflow);
+      } else if (instruction == instructions.jg) {
+        jump = !((store.sign ^ store.overflow) | store.zero);
+      } else {
+        unreachable();
+      }
+
+      i = jump ? mr(nw + 1) : i + 4;
+    } else if (instruction == instructions.call) {  // [[[[dst]]]]
+      word address = (store.registers[registers.esp] -= 4);
+      mw(address, i + 4);
+      i = nw;
+    } else if (instruction == instructions.ret) {  //
+      i = mr(store.registers[registers.esp]);
+      store.registers[registers.esp] += 4;
     } else if (instruction == instructions.pushl) {  // [src / f]
       word address = (store.registers[registers.esp] -= 4);
-      m(address, store.registers[nr[0]]);
+      mw(address, store.registers[nr[0]]);
 
       i++;
     } else if (instruction == instructions.popl) {  // [src / f]
+      word address = store.registers[registers.esp];
+      store.registers[registers.esp] += 4;
+      store.registers[nr[0]] = mr(address);
+
+      i++;
     } else {
       error("unknown instruction code %x", instruction);
     }

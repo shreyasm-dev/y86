@@ -8,6 +8,8 @@
 #define nr ((byte[]){(_ & 0xf0) >> 4, _ & 0xf})
 #define nw ((source[i + 3] << 24) | (source[i + 2] << 16) | (source[i + 1] << 8) | source[i])
 
+#define _$$(i) ((instruction & 0xf0) == instructions.i)
+
 #include <libc.h>
 #include <stdbool.h>
 #include <stdlib.h>

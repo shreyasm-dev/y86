@@ -15,5 +15,7 @@ struct store {
 extern struct store store;
 
 void init_store();
+void mw(word address, word data);
+word mr(word address);
 
 #endif

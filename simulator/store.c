@@ -2,7 +2,7 @@
 
 #include "../common/includes.h"
 
-long MEMORY_SIZE = 0xf00;
+long MEMORY_SIZE = 0xfff;
 
 struct store store = {
     .registers = NULL, .memory = NULL, .zero = 0, .sign = 0, .overflow = 0};
@@ -17,13 +17,15 @@ void init_store() {
     store.registers[i] = 0;
   }
 
-  store.memory = (word*)malloc(MEMORY_SIZE * sizeof(word));
+  store.registers[registers.esp] = MEMORY_SIZE;
+
+  store.memory = (byte*)malloc(MEMORY_SIZE * sizeof(byte));
   for (int i = 0; i < MEMORY_SIZE; i++) {
     store.memory[i] = 0;
   }
 }
 
-void ms(word address, word data) {
+void mw(word address, word data) {
   store.memory[address] = data & 0xff;
   store.memory[address + 1] = (data & 0xff00) >> 8;
   store.memory[address + 2] = (data & 0xff0000) >> 16;

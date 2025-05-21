@@ -22,8 +22,13 @@
   exit(1); \
 }
 
+#define unreachable() { \
+  error("unreachable"); \
+}
+
 typedef uint8_t byte;
 typedef uint32_t word;
+#define MAX_WORD 4294967296;
 
 typedef struct deferred_address {
   int address;
@@ -45,5 +50,6 @@ bool eq_any(char* a, char** b, int n);
 bool ceq_any(char a, char* b);
 char* read_string(char* filename);
 byte* read_ascii_hex(char* filename, long* n);
+bool negative(word n);
 
 #endif
