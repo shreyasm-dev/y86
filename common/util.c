@@ -83,8 +83,13 @@ byte* read_ascii_hex(char* filename, long* n) {
   char* str = read_string(filename);
   *n = strlen(str);
 
+  if (str[*n - 1] == '\n') {
+    str[*n - 1] = '\0';
+    (*n)--;
+  }
+
   if (*n % 2 != 0) {
-    error("expected even number of hex digits");
+    error("expected even number of hex digits (got %ld)", *n);
   }
 
   *n /= 2;
