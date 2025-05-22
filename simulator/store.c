@@ -46,7 +46,7 @@ void print_store() {
 
   for (int i = 0; i < 8; i++) {
     register_values[i] = malloc(10 * sizeof(char));
-    sprintf(register_values[i], "%u", store.registers[i]);
+    sprintf(register_values[i], "%02x", store.registers[i]);
   }
 
   table(
@@ -68,9 +68,16 @@ void print_store() {
 
   printf("\n");
   for (int i = MEMORY_SIZE; i > store.registers[registers.esp]; i--) {
+    if ((i + 1) % 4 == 0) {
+      printf("0x%03x: ", i - 1);
+    }
+
     printf("%02x ", store.memory[i - 1]);
+
     if (i % 4 == 0) {
       printf("\n");
     }
   }
+
+  printf("\n");
 }

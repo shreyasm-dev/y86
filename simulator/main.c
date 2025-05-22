@@ -2,7 +2,7 @@
 #include "store.h"
 
 int main(int argc, char** argv) {
-  bool print_steps = false;
+  bool print_steps = true;
 
   init_store();
 
@@ -149,10 +149,10 @@ int main(int argc, char** argv) {
 
     if (print_steps) {
       printf("\n");
-      printf("instruction: %02x\n", instruction);
+      printf("instruction: %02x\n\n", instruction);
       print_store();
       printf("program counter: %ld\n", i);
-      printf("==============================\n");
+      printf("\n==============================\n");
     }
 
     if (i >= MEMORY_SIZE) {
