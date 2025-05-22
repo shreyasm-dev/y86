@@ -81,15 +81,23 @@ char* read_string(char* filename) {
 
 byte* read_ascii_hex(char* filename, long* n) {
   char* str = read_string(filename);
-  *n = strlen(str);
+  int len = strlen(str);
+  char* pure = (char*)malloc(0);
 
-  if (str[*n - 1] == '\n') {
-    str[*n - 1] = '\0';
-    (*n)--;
+  for (int i = 0; i < len; i++) {
+    if (str[i] == ';') {
+      while (str[i] != '\n' && str[i] != EOF) {
+        i++;
+      }
+    }
+
+    if ((str[i] >= '0' && str[i] <= '9') || (str[i] >= 'a' && str[i] <= 'f')) {
+      push(pure, str[i], *n)
+    }
   }
 
   if (*n % 2 != 0) {
-    error("expected even number of hex digits (got %ld)", *n);
+    error("expected number of bits to be even, got %ld", *n);
   }
 
   *n /= 2;
@@ -97,20 +105,27 @@ byte* read_ascii_hex(char* filename, long* n) {
   byte* buf = (byte*)malloc(*n * sizeof(byte));
 
   for (int i = 0; i < *n; i++) {
-    char* hex = (char*)malloc(3);
-    hex[0] = str[2 * i];
-    hex[1] = str[(2 * i) + 1];
-    hex[2] = '\0';
+    char a = pure[i * 2];
+    char b = pure[i * 2 + 1];
 
-    buf[i] = (byte)strtol(hex, NULL, 16);
-    free(hex);
+    if ('0' <= a && a <= '9')
+      a -= '0';
+    else if ('a' <= a && a <= 'f')
+      a -= 'a' - 10;
+    else
+      error("invalid hex character %c", a);
+
+    if ('0' <= b && b <= '9')
+      b -= '0';
+    else if ('a' <= b && b <= 'f')
+      b -= 'a' - 10;
+    else
+      error("invalid hex character %c", b);
+
+    buf[i] = (a << 4) | b;
   }
-
-  free(str);
 
   return buf;
 }
 
-bool negative(word n) {
-  return n >> 31;
-}
+bool negative(word n) { return n >> 31; }

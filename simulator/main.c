@@ -13,6 +13,13 @@ int main(int argc, char** argv) {
   long len = 0;
   byte* source = read_ascii_hex(filename, &len);
 
+  for (int i = 0; i < len; i++) {
+    store.memory[i] = source[i];
+  }
+
+  free(source);
+  source = store.memory;
+
   long i = 0;
 
   while (true) {
@@ -77,31 +84,22 @@ int main(int argc, char** argv) {
       word src = store.registers[nr[0]];
       word* dst = &store.registers[nr[1]];
 
-      store.overflow =
-          !(negative(src) ^ negative(*dst));  // i.e. are the signs the same?
-                                              // can't overflow if they're not
-
       if (instruction == instructions.addl) {
-        *dst = src + *dst;
-        store.overflow =
-            store.overflow &&
-            (negative(src) !=
-             negative(*dst));  // if the sign changed, it overflowed
+        *dst += src;
       } else if (instruction == instructions.subl) {
-        *dst = src - *dst;
-        store.overflow = store.overflow && (negative(src) != negative(*dst));
+        *dst -= src;
       } else if (instruction == instructions.andl) {
-        *dst = src & *dst;
-        store.overflow = 0;
+        *dst &= src;
       } else if (instruction == instructions.xorl) {
-        *dst = src ^ *dst;
-        store.overflow = 0;
+        *dst ^= src;
       } else {
         unreachable();
       }
 
+      store.zero = (*dst == 0);
       store.sign = negative(*dst);
-      store.zero = *dst == 0;
+      store.overflow = ((*dst < 0) != (src < 0) && (*dst < src)) ||
+                       ((*dst > 0) != (src > 0) && (*dst > src));
 
       i++;
     } else if (_$$(jmp)) {  // [[[[dst]]]]
@@ -125,7 +123,7 @@ int main(int argc, char** argv) {
         unreachable();
       }
 
-      i = jump ? mr(nw + 1) : i + 4;
+      i = jump ? nw : i + 4;
     } else if (instruction == instructions.call) {  // [[[[dst]]]]
       word address = (store.registers[registers.esp] -= 4);
       mw(address, i + 4);
@@ -154,6 +152,9 @@ int main(int argc, char** argv) {
   }
 
   printf("eax: %u\n", store.registers[registers.eax]);
-  printf("ebx: %u\n", store.registers[registers.ebx]);
   printf("ecx: %u\n", store.registers[registers.ecx]);
+  printf("edx: %u\n", store.registers[registers.edx]);
+
+  printf("zero: %d; sign: %d; overflow: %d\n", store.zero, store.sign,
+         store.overflow);
 }
