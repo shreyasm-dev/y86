@@ -37,3 +37,40 @@ word mr(word address) {
           (store.memory[address + 2] << 16) |
           (store.memory[address + 3] << 24));
 }
+
+void print_store() {
+  char* register_list[] = {
+      "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi",
+  };
+  char** register_values = malloc(8 * sizeof(char*));
+
+  for (int i = 0; i < 8; i++) {
+    register_values[i] = malloc(10 * sizeof(char));
+    sprintf(register_values[i], "%u", store.registers[i]);
+  }
+
+  table(
+      (char**[]){
+          register_list,
+          register_values,
+      },
+      2, 8, false);
+
+  printf("\n");
+
+  table(
+      (char**[]){
+          (char*[]){"zero", store.zero ? "true" : "false"},
+          (char*[]){"sign", store.sign ? "true" : "false"},
+          (char*[]){"overflow", store.overflow ? "true" : "false"},
+      },
+      3, 2, true);
+
+  printf("\n");
+  for (int i = MEMORY_SIZE; i > store.registers[registers.esp]; i--) {
+    printf("%02x ", store.memory[i - 1]);
+    if (i % 4 == 0) {
+      printf("\n");
+    }
+  }
+}

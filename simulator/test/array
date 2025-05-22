@@ -1,0 +1,22 @@
+; pushes an array at some location in memory onto the stack
+
+70 19 00 00 00 ; jump past the array
+
+04 00 00 00 ; array length
+0a 00 00 00 ; array values
+0b 00 00 00
+0c 00 00 00
+0d 00 00 00
+
+30 f2 01 00 00 00 ; edx = 1 (y86 doesn't have an increment instruction)
+30 f3 04 00 00 00 ; ebx = 4 (word size)
+
+30 f0 05 00 00 00 ; eax = addr[array length]
+50 01 00 00 00 00 ; ecx = m[eax] = m[addr[array length]] = array length
+60 30 ; eax += 4 (eax = addr[array])
+
+50 06 00 00 00 00 ; esi = m[eax] = m[addr[array]] = array[n]
+a0 6f ; push esi (push array[n])
+60 30 ; eax += 4 (eax = array[n + 1])
+61 21 ; ecx -= 1 (the elements remaining in the array)
+74 33 ; jump if ecx != 0

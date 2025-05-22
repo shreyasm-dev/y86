@@ -1,0 +1,8 @@
+irmovl $1, %eax ; eax = 1
+irmovl $c, %ecx ; ecx = 12
+irmovl $f0, %edx ; edx = 240
+
+loop: addl %eax, %edx ; edx += eax
+subl %eax, %ecx ; ecx -= eax
+jne loop ; if ecx != 0, jump to loop
+halt

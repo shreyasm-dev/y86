@@ -1,7 +1,7 @@
 {
   "tasks": {
-    "add-simulator-test": {
-      "description": "Add a simulator test",
+    "copy": {
+      "description": "Copy a simulator test",
       "command": "deno run --allow-read --allow-write ./util/copy-simulator-test.ts"
     }
   }

@@ -2,6 +2,8 @@
 #include "store.h"
 
 int main(int argc, char** argv) {
+  bool print_steps = false;
+
   init_store();
 
   char* filename =
@@ -97,9 +99,8 @@ int main(int argc, char** argv) {
       }
 
       store.zero = (*dst == 0);
-      store.sign = negative(*dst);
-      store.overflow = ((*dst < 0) != (src < 0) && (*dst < src)) ||
-                       ((*dst > 0) != (src > 0) && (*dst > src));
+      store.sign = neg(*dst);
+      store.overflow = (cmp(*dst, src) < 0) && (cmp(*dst, *dst - src) > 0);
 
       i++;
     } else if (_$$(jmp)) {  // [[[[dst]]]]
@@ -146,15 +147,20 @@ int main(int argc, char** argv) {
       error("unknown instruction code %x", instruction);
     }
 
+    if (print_steps) {
+      printf("\n");
+      printf("instruction: %02x\n", instruction);
+      print_store();
+      printf("program counter: %ld\n", i);
+      printf("==============================\n");
+    }
+
     if (i >= MEMORY_SIZE) {
       break;
     }
   }
 
-  printf("eax: %u\n", store.registers[registers.eax]);
-  printf("ecx: %u\n", store.registers[registers.ecx]);
-  printf("edx: %u\n", store.registers[registers.edx]);
-
-  printf("zero: %d; sign: %d; overflow: %d\n", store.zero, store.sign,
-         store.overflow);
+  if (!print_steps) {
+    print_store();
+  }
 }

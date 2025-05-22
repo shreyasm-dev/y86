@@ -22,6 +22,12 @@
   exit(1); \
 }
 
+#define bold(...) { \
+  printf("\033[1m"); \
+  printf(__VA_ARGS__); \
+  printf("\033[0m"); \
+}
+
 #define unreachable() { \
   error("unreachable"); \
 }
@@ -50,6 +56,8 @@ bool eq_any(char* a, char** b, int n);
 bool ceq_any(char a, char* b);
 char* read_string(char* filename);
 byte* read_ascii_hex(char* filename, long* n);
-bool negative(word n);
+bool neg(word n);
+int cmp(word a, word b);
+void table(char*** table, int m, int n, bool vertical);
 
 #endif

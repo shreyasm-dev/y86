@@ -9,7 +9,7 @@ void tokenise(char*** tokens, int* n, char* source, bool include_punctuation) {
   int m = 0;
 
   for (int i = 0; i < strlen(source); i++) {
-    if (ceq_any(_, " \n\t\r(),")) {
+    if (ceq_any(_, " \n\t\r(),;")) {
       if (!eq(current, "")) {
         // add current to tokens
         push(*tokens, current, *n);
@@ -19,7 +19,12 @@ void tokenise(char*** tokens, int* n, char* source, bool include_punctuation) {
         m = 0;
       }
 
-      if (include_punctuation) {
+      if (_ == ';') {
+        while (_ != '\n' && _ != '\0') {
+          i++;
+          _ = source[i];
+        }
+      } else if (include_punctuation) {
         // add _ to tokens
         char* _str = (char*)malloc(2);
         snprintf(_str, sizeof(_str), "%c", _);

@@ -128,4 +128,88 @@ byte* read_ascii_hex(char* filename, long* n) {
   return buf;
 }
 
-bool negative(word n) { return n >> 31; }
+bool neg(word n) { return n >> 31; }
+
+int cmp(word a, word b) {
+  if (a == b) {
+    return 0;
+  } else if (neg(a) && !neg(b)) {
+    return -1;
+  } else if (!neg(a) && neg(b)) {
+    return 1;
+  } else if (a < b) {
+    return -1;
+  } else {
+    return 1;
+  }
+}
+
+/*
+
+input: [
+  [a, b, c],
+  [d, e, f],
+] - m x n table (m rows, n columns)
+
+output:
+
+╔═════╦═════╦═════╗
+║  a  ║  b  ║  c  ║
+╠═════╬═════╬═════╣
+║  d  ║  e  ║  f  ║
+╚═════╩═════╩═════╝
+
+╔═╦═╗
+║ ║ ║
+╚═╩═╝
+
+*/
+void table(char*** table, int m, int n, bool vertical) {
+  int padding = 1;
+
+  int* widths = (int*)malloc(n * sizeof(int));
+  for (int i = 0; i < n; i++) widths[i] = 0;
+  for (int i = 0; i < n; i++)
+    for (int j = 0; j < m; j++)
+      widths[i] = fmax(widths[i], strlen(table[j][i]));
+
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++) {
+      printf(i == 0 && j == 0 ? "╔" : (i == 0 ? "╦" : (j == 0 ? "╠" : "╬")));
+      for (int n = 0; n < (2 * padding) + widths[j]; n++) printf("═");
+    }
+    printf(i == 0 ? "╗" : "╣");
+
+    printf("\n");
+
+    for (int j = 0; j < n; j++) {
+      printf("║");
+
+      int slack = widths[j] - strlen(table[i][j]);
+
+      for (int n = 0; n < padding + floor(slack / 2.0); n++) printf(" ");
+
+      if ((vertical && j == 0) || (!vertical && i == 0)) {
+        bold("%s", table[i][j]);
+      } else {
+        printf("%s", table[i][j]);
+      }
+
+      for (int n = 0; n < padding + ceil(slack / 2.0); n++) printf(" ");
+    }
+    printf("║");
+
+    printf("\n");
+  }
+
+  for (int i = 0; i < n; i++) {
+    printf(i == 0 ? "╚" : "╩");
+    for (int n = 0; n < (2 * padding) + widths[i]; n++) printf("═");
+
+    if (i == n - 1) {
+      printf("╝");
+    }
+  }
+
+  printf("\n");
+}

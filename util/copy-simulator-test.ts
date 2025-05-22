@@ -7,7 +7,5 @@ if (!name) {
 
 await Deno.writeTextFile(
   `./simulator/test/${name}`,
-  (
-    await Deno.readTextFile(`./assembler/test/${name}-expected`)
-  ).replace(/\s+/g, "")
+  await Deno.readTextFile(`./assembler/test/${name}-expected`)
 );
